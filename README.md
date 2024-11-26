@@ -1,3 +1,3 @@
 # langchain-mcp
 
-Placeholder
+[Model Context Protocol](https://modelcontextprotocol.io) tool calling support in LangChain.
