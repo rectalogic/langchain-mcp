@@ -1,0 +1,14 @@
+[project]
+name = "langchain-mcp"
+version = "0.0.0"
+description = "Placholder, coming soon"
+readme = "README.md"
+authors = [
+    { name = "Andrew Wason", email = "rectalogic@rectalogic.com" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
