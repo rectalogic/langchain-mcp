@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-from langchain_tests.unit_tests import ToolsUnitTests
+from langchain_tests.integration_tests import ToolsIntegrationTests
 
 
 @pytest.mark.usefixtures("mcptool")
-class TestMCPToolIntegration(ToolsUnitTests):
+class TestMCPToolIntegration(ToolsIntegrationTests):
     @property
     def tool_constructor(self):
         return self.tool

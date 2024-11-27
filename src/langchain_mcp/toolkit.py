@@ -1,12 +1,14 @@
 # Copyright (C) 2024 Andrew Wason
 # SPDX-License-Identifier: MIT
 
+import asyncio
 import typing as t
+import warnings
 from collections.abc import Callable
 
 import pydantic
 import pydantic_core
-from langchain_core.tools.base import BaseTool, BaseToolkit, InjectedToolArg, ToolException
+from langchain_core.tools.base import BaseTool, BaseToolkit, ToolException
 from mcp import ClientSession
 
 
@@ -68,7 +70,10 @@ class MCPTool(BaseTool):
     handle_tool_error: bool | str | Callable[[ToolException], str] | None = True
 
     def _run(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        raise NotImplementedError("Must invoke tool asynchronously")
+        warnings.warn(
+            "Invoke this tool asynchronousely using `ainvoke`. This method exists only to satisfy tests.", stacklevel=1
+        )
+        return asyncio.run(self._arun(*args, **kwargs))
 
     async def _arun(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         result = await self.session.call_tool(self.name, arguments=kwargs)

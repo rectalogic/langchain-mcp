@@ -1,7 +1,7 @@
 [project]
 name = "langchain-mcp"
-version = "0.0.0"
-description = "Placholder, coming soon"
+version = "0.1.0a1"
+description = "Model Context Protocol tool calling support for LangChain"
 readme = "README.md"
 authors = [
     { name = "Andrew Wason", email = "rectalogic@rectalogic.com" }
@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "langchain-core~=0.3.21",
     "mcp~=1.0.0",
-    "pydantic>=2.10.2",
+    "pydantic~=2.10.2",
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -69,4 +69,4 @@ select = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
+asyncio_default_fixture_loop_scope = "class"
