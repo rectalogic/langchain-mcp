@@ -32,7 +32,7 @@ class MCPToolkit(BaseToolkit):
 
         return [
             MCPTool(
-                session=self.session,
+                toolkit=self,
                 name=tool.name,
                 description=tool.description or "",
                 args_schema=create_schema_model(tool.inputSchema),
@@ -67,7 +67,7 @@ class MCPTool(BaseTool):
     MCP server tool
     """
 
-    session: ClientSession
+    toolkit: MCPToolkit
     handle_tool_error: bool | str | Callable[[ToolException], str] | None = True
 
     @t.override
@@ -79,7 +79,7 @@ class MCPTool(BaseTool):
 
     @t.override
     async def _arun(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        result = await self.session.call_tool(self.name, arguments=kwargs)
+        result = await self.toolkit.session.call_tool(self.name, arguments=kwargs)
         content = pydantic_core.to_json(result.content).decode()
         if result.isError:
             raise ToolException(content)
