@@ -28,4 +28,5 @@ jobs:
     - name: Lint
       run: |
         uv run --python ${{ matrix.python-version }} --python-preference only-system ruff format --check
-        uv run --python ${{ matrix.python-version }} --python-preference only-system ruff check 
+        uv run --python ${{ matrix.python-version }} --python-preference only-system ruff check
+        uv run --python ${{ matrix.python-version }} --python-preference only-system mypy 
