@@ -68,7 +68,6 @@ class MCPTool(BaseTool):
     """
 
     session: ClientSession
-    args_schema: type[pydantic.BaseModel]
     handle_tool_error: bool | str | Callable[[ToolException], str] | None = True
 
     @t.override
@@ -89,4 +88,5 @@ class MCPTool(BaseTool):
     @t.override
     @property
     def tool_call_schema(self) -> type[pydantic.BaseModel]:
+        assert self.args_schema is not None  # noqa: S101
         return self.args_schema
