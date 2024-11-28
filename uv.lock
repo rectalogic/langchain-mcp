@@ -288,6 +288,7 @@ dependencies = [
     { name = "langchain-core" },
     { name = "mcp" },
     { name = "pydantic" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -299,7 +300,6 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-socket" },
     { name = "ruff" },
-    { name = "typing-extensions" },
 ]
 
 [package.metadata]
@@ -307,6 +307,7 @@ requires-dist = [
     { name = "langchain-core", specifier = "~=0.3.21" },
     { name = "mcp", specifier = "~=1.0.0" },
     { name = "pydantic", specifier = "~=2.10.2" },
+    { name = "typing-extensions", specifier = "~=4.12.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -318,7 +319,6 @@ dev = [
     { name = "pytest-asyncio", specifier = "~=0.24.0" },
     { name = "pytest-socket", specifier = "~=0.7.0" },
     { name = "ruff", specifier = "~=0.8.0" },
-    { name = "typing-extensions", specifier = "~=4.12.2" },
 ]
 
 [[package]]
