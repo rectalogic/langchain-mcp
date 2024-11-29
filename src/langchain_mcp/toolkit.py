@@ -10,6 +10,8 @@ import pydantic_core
 import typing_extensions as t
 from langchain_core.tools.base import BaseTool, BaseToolkit, ToolException
 from mcp import ClientSession, ListToolsResult
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema as cs
 
 
 class MCPToolkit(BaseToolkit):
@@ -51,17 +53,13 @@ def create_schema_model(schema: dict[str, t.Any]) -> type[pydantic.BaseModel]:
     # Create a new model class that returns our JSON schema.
     # LangChain requires a BaseModel class.
     class Schema(pydantic.BaseModel):
-        model_config = pydantic.ConfigDict(extra="allow", arbitrary_types_allowed=True)
+        model_config = pydantic.ConfigDict(extra="allow")
 
         @t.override
         @classmethod
-        def model_json_schema(
-            cls,
-            by_alias: bool = True,
-            ref_template: str = pydantic.json_schema.DEFAULT_REF_TEMPLATE,
-            schema_generator: type[pydantic.json_schema.GenerateJsonSchema] = pydantic.json_schema.GenerateJsonSchema,
-            mode: pydantic.json_schema.JsonSchemaMode = "validation",
-        ) -> dict[str, t.Any]:
+        def __get_pydantic_json_schema__(
+            cls, core_schema: cs.CoreSchema, handler: pydantic.GetJsonSchemaHandler
+        ) -> JsonSchemaValue:
             return schema
 
     return Schema
