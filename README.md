@@ -1,5 +1,7 @@
 # langchain-mcp
 
+![PyPI - Version](https://img.shields.io/pypi/v/langchain-mcp)
+
 [Model Context Protocol](https://modelcontextprotocol.io) tool calling support in LangChain.
 
 Create a `langchain_mcp.MCPToolkit` with an `mcp.ClientSession`,
