@@ -13,6 +13,8 @@ from mcp import ClientSession, ListToolsResult
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema as cs
 
+from .schema import schema_to_pydantic
+
 
 class MCPToolkit(BaseToolkit):
     """
@@ -42,27 +44,21 @@ class MCPToolkit(BaseToolkit):
                 session=self.session,
                 name=tool.name,
                 description=tool.description or "",
-                args_schema=create_schema_model(tool.inputSchema),
+                args_schema=create_schema_model(tool.name, tool.inputSchema),
             )
             # list_tools returns a PaginatedResult, but I don't see a way to pass the cursor to retrieve more tools
             for tool in self._tools.tools
         ]
 
 
-def create_schema_model(schema: dict[str, t.Any]) -> type[pydantic.BaseModel]:
+def create_schema_model(tool_name: str, schema: dict[str, t.Any]) -> type[pydantic.BaseModel]:
     # Create a new model class that returns our JSON schema.
     # LangChain requires a BaseModel class.
-    class Schema(pydantic.BaseModel):
-        model_config = pydantic.ConfigDict(extra="allow")
 
-        @t.override
-        @classmethod
-        def __get_pydantic_json_schema__(
-            cls, core_schema: cs.CoreSchema, handler: pydantic.GetJsonSchemaHandler
-        ) -> JsonSchemaValue:
-            return schema
+    model_name = "ToolCallSchema"
+    pydantic_model = schema_to_pydantic(schema, model_name)
 
-    return Schema
+    return pydantic_model
 
 
 class MCPTool(BaseTool):
