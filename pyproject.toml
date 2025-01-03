@@ -12,6 +12,7 @@ dependencies = [
     "mcp~=1.0.0",
     "pydantic~=2.10.2",
     "typing-extensions~=4.12.2",
+    "datamodel-code-generator==0.26.3"
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
