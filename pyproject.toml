@@ -1,6 +1,6 @@
 [project]
 name = "langchain-mcp"
-version = "0.1.0a1"
+version = "0.1.0"
 description = "Model Context Protocol tool calling support for LangChain"
 readme = "README.md"
 authors = [
