@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-import json
 import warnings
 from collections.abc import Callable
 
@@ -11,6 +10,7 @@ import pydantic_core
 import typing_extensions as t
 from langchain_core.tools.base import BaseTool, BaseToolkit, ToolException
 from mcp import ClientSession, ListToolsResult
+from mcp.types import EmbeddedResource, ImageContent, TextContent
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema as cs
 
@@ -105,10 +105,10 @@ class MCPTool(BaseTool):
 
     session: ClientSession
     handle_tool_error: bool | str | Callable[[ToolException], str] | None = True
-    response_format: str = "content_and_artifact"
+    response_format: t.Literal["content", "content_and_artifact"] = "content_and_artifact"
 
     @t.override
-    def _run(self, *args: t.Any, **kwargs: t.Any) -> t.Tuple[str, t.Any]:
+    def _run(self, *args: t.Any, **kwargs: t.Any) -> tuple[str, list[ImageContent | EmbeddedResource]]:
         warnings.warn(
             "Invoke this tool asynchronousely using `ainvoke`. This method exists only to satisfy standard tests.",
             stacklevel=1,
@@ -116,19 +116,16 @@ class MCPTool(BaseTool):
         return asyncio.run(self._arun(*args, **kwargs))
 
     @t.override
-    async def _arun(self, *args: t.Any, **kwargs: t.Any) -> t.Tuple[str, t.Any]:
+    async def _arun(self, *args: t.Any, **kwargs: t.Any) -> tuple[str, list[ImageContent | EmbeddedResource]]:
         result = await self.session.call_tool(self.name, arguments=kwargs)
-        content = pydantic_core.to_json(result.content).decode()
         if result.isError:
-            raise ToolException(content)
-        content_blocks = json.loads(content)
-        text_content = "\n".join([block["text"] for block in content_blocks if block["type"] == "text"])
-        artifact = [block["artifact"] for block in content_blocks if "artifact" in block]
-        artifact = None if not artifact else (artifact[0] if len(artifact) == 1 else artifact)
-        return text_content, artifact
+            raise ToolException(pydantic_core.to_json(result.content).decode())
+        text_content = [block for block in result.content if isinstance(block, TextContent)]
+        artifacts = [block for block in result.content if not isinstance(block, TextContent)]
+        return pydantic_core.to_json(text_content).decode(), artifacts
 
-    @t.override
     @property
+    @t.override
     def tool_call_schema(self) -> type[pydantic.BaseModel]:
         assert self.args_schema is not None  # noqa: S101
         return self.args_schema
