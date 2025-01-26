@@ -30,7 +30,5 @@ jobs:
         uv run --python ${{ matrix.python-version }} --python-preference only-system ruff format --check
         uv run --python ${{ matrix.python-version }} --python-preference only-system ruff check
     - name: Mypy
-      # Disable until fix released https://github.com/pydantic/pydantic/pull/10979
-      if: ${{ matrix.python-version != '3.13' }}
       run: |
         uv run --python ${{ matrix.python-version }} --python-preference only-system mypy 
