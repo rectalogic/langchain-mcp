@@ -104,11 +104,11 @@ def get_field_type(root_schema: dict[str, Any], type_def: dict[str, Any]) -> Any
         if type(None) in [get_field_type(root_schema, t) for t in type_def["anyOf"]]:
             # If None is one of the possible types, make the field optional
             if len(types) == 1:
-                return Union[types[0], type(None)]
-            return Union[tuple(types + [type(None)])]
+                return types[0] | type(None)
+            return Union[tuple(types + [type(None)])]  # noqa: UP007
         if len(types) == 1:
             return types[0]
-        return Union[tuple(types)]
+        return Union[tuple(types)]  # noqa: UP007
 
     if "type" not in type_def:
         return Any
@@ -177,7 +177,7 @@ def create_model_from_schema(
         field_type = get_field_type(root_schema, field_schema)
         default = field_schema.get("default", ...)
         if field_name not in required and default is ...:
-            field_type = Union[field_type, type(None)]
+            field_type = field_type | type(None)
             default = None
 
         description = field_schema.get("description", "")
