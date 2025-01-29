@@ -6,7 +6,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Union
+from typing import Any, Dict, List, Type, TypeVar, Union
 
 import pydantic
 import pydantic_core
@@ -46,12 +46,22 @@ class MCPToolkit(BaseToolkit):
                 description=tool.description or "",
                 args_schema=create_model_from_schema(tool.inputSchema, tool.name),
             )
-            # list_tools returns a PaginatedResult, but I don't see a way to pass the cursor to retrieve more tools
             for tool in self._tools.tools
         ]
 
 
-TYPEMAP = {"string": str, "integer": int, "number": float, "boolean": bool, "array": list, "object": dict, "null": None}
+# Define type alias for clarity
+JsonSchemaType = Type[Any]
+
+TYPEMAP: dict[str, JsonSchemaType] = {
+    "string": str,
+    "integer": int,
+    "number": float,
+    "boolean": bool,
+    "array": List,
+    "object": Dict,
+    "null": type(None),
+}
 
 
 def resolve_ref(root_schema: dict[str, Any], ref: str) -> dict[str, Any]:
@@ -79,7 +89,7 @@ def get_field_type(root_schema: dict[str, Any], type_def: dict[str, Any]) -> Any
     if "$ref" in type_def:
         referenced_schema = resolve_ref(root_schema, type_def["$ref"])
         # Create a forward reference since the model might not exist yet
-        return f"'{referenced_schema.get('title', 'UntitledModel')}'"
+        return referenced_schema.get("title", "UntitledModel")
 
     if "enum" in type_def:
         # Create an Enum class for this field
@@ -90,15 +100,15 @@ def get_field_type(root_schema: dict[str, Any], type_def: dict[str, Any]) -> Any
     if "anyOf" in type_def:
         types = [get_field_type(root_schema, t) for t in type_def["anyOf"]]
         # Remove None from types list to handle it separately
-        types = [t for t in types if t is not None]
-        if None in [get_field_type(root_schema, t) for t in type_def["anyOf"]]:
+        types = [t for t in types if t is not type(None)]  # noqa: E721
+        if type(None) in [get_field_type(root_schema, t) for t in type_def["anyOf"]]:
             # If None is one of the possible types, make the field optional
             if len(types) == 1:
-                return types[0] | None
-            return Union[tuple(types)] | None  # noqa: UP007
+                return Union[types[0], type(None)]
+            return Union[tuple(types + [type(None)])]
         if len(types) == 1:
             return types[0]
-        return Union[tuple(types)]  # noqa: UP007
+        return Union[tuple(types)]
 
     if "type" not in type_def:
         return Any
@@ -107,26 +117,29 @@ def get_field_type(root_schema: dict[str, Any], type_def: dict[str, Any]) -> Any
     if type_name == "array":
         if "items" in type_def:
             item_type = get_field_type(root_schema, type_def["items"])
-            return list[item_type]
-        return list[Any]
+            return List[item_type]  # type: ignore
+        return List[Any]
 
     if type_name == "object":
         if "additionalProperties" in type_def:
             additional_props = type_def["additionalProperties"]
             # Handle case where additionalProperties is a boolean
             if isinstance(additional_props, bool):
-                return dict[str, Any] if additional_props else dict[str, Any]
+                return Dict[str, Any]
             # Handle case where additionalProperties is a schema
             value_type = get_field_type(root_schema, additional_props)
-            return dict[str, value_type]
-        return dict[str, Any]
+            return Dict[str, value_type]  # type: ignore
+        return Dict[str, Any]
 
     return TYPEMAP.get(type_name, Any)
 
 
+ModelType = TypeVar("ModelType", bound=BaseModel)
+
+
 def create_model_from_schema(
     schema: dict[str, Any], name: str, root_schema: dict[str, Any] | None = None, created_models: set[str] | None = None
-) -> type[BaseModel]:
+) -> Type[ModelType]:
     """Create a Pydantic model from a JSON schema definition
 
     Args:
@@ -159,18 +172,18 @@ def create_model_from_schema(
     properties = schema.get("properties", {})
     required = schema.get("required", [])
 
-    fields = {}
+    fields: dict[str, tuple[Any, Any]] = {}
     for field_name, field_schema in properties.items():
         field_type = get_field_type(root_schema, field_schema)
         default = field_schema.get("default", ...)
         if field_name not in required and default is ...:
-            field_type = field_type | None
+            field_type = Union[field_type, type(None)]
             default = None
 
         description = field_schema.get("description", "")
         fields[field_name] = (field_type, Field(default=default, description=description))
 
-    model = create_model(name, **fields)
+    model = create_model(name, **fields)  # type: ignore
     # Add model to the module's namespace so it can be referenced
     setattr(sys.modules[__name__], name, model)
     return model
@@ -185,7 +198,7 @@ class MCPTool(BaseTool):
     handle_tool_error: bool | str | Callable[[ToolException], str] | None = True
 
     @t.override
-    def _run(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    def _run(self, *args: Any, **kwargs: Any) -> Any:
         warnings.warn(
             "Invoke this tool asynchronousely using `ainvoke`. This method exists only to satisfy standard tests.",
             stacklevel=1,
@@ -193,7 +206,7 @@ class MCPTool(BaseTool):
         return asyncio.run(self._arun(*args, **kwargs))
 
     @t.override
-    async def _arun(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         result = await self.session.call_tool(self.name, arguments=kwargs)
         content = pydantic_core.to_json(result.content).decode()
         if result.isError:
@@ -202,6 +215,6 @@ class MCPTool(BaseTool):
 
     @t.override
     @property
-    def tool_call_schema(self) -> type[pydantic.BaseModel]:
+    def tool_call_schema(self) -> Type[pydantic.BaseModel]:
         assert self.args_schema is not None  # noqa: S101
         return self.args_schema
