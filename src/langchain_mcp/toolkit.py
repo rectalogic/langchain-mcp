@@ -6,7 +6,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 import pydantic
 import pydantic_core
@@ -51,15 +51,15 @@ class MCPToolkit(BaseToolkit):
 
 
 # Define type alias for clarity
-JsonSchemaType = Type[Any]
+JsonSchemaType = type[Any]
 
 TYPEMAP: dict[str, JsonSchemaType] = {
     "string": str,
     "integer": int,
     "number": float,
     "boolean": bool,
-    "array": List,
-    "object": Dict,
+    "array": list,
+    "object": dict,
     "null": type(None),
 }
 
@@ -117,19 +117,19 @@ def get_field_type(root_schema: dict[str, Any], type_def: dict[str, Any]) -> Any
     if type_name == "array":
         if "items" in type_def:
             item_type = get_field_type(root_schema, type_def["items"])
-            return List[item_type]  # type: ignore
-        return List[Any]
+            return list[item_type]  # type: ignore
+        return list[Any]
 
     if type_name == "object":
         if "additionalProperties" in type_def:
             additional_props = type_def["additionalProperties"]
             # Handle case where additionalProperties is a boolean
             if isinstance(additional_props, bool):
-                return Dict[str, Any]
+                return dict[str, Any]
             # Handle case where additionalProperties is a schema
             value_type = get_field_type(root_schema, additional_props)
-            return Dict[str, value_type]  # type: ignore
-        return Dict[str, Any]
+            return dict[str, value_type]  # type: ignore
+        return dict[str, Any]
 
     return TYPEMAP.get(type_name, Any)
 
@@ -139,7 +139,7 @@ ModelType = TypeVar("ModelType", bound=BaseModel)
 
 def create_model_from_schema(
     schema: dict[str, Any], name: str, root_schema: dict[str, Any] | None = None, created_models: set[str] | None = None
-) -> Type[ModelType]:
+) -> type[ModelType]:
     """Create a Pydantic model from a JSON schema definition
 
     Args:
@@ -215,6 +215,6 @@ class MCPTool(BaseTool):
 
     @t.override
     @property
-    def tool_call_schema(self) -> Type[pydantic.BaseModel]:
+    def tool_call_schema(self) -> type[pydantic.BaseModel]:
         assert self.args_schema is not None  # noqa: S101
         return self.args_schema
