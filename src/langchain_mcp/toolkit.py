@@ -56,6 +56,7 @@ TYPEMAP = {
     "array": list,
     "boolean": bool,
     "string": str,
+    "object": object,
     "null": type(None),
 }
 
