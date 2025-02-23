@@ -11,8 +11,6 @@ import typing_extensions as t
 from langchain_core.tools.base import BaseTool, BaseToolkit, ToolException
 from mcp import ClientSession, ListToolsResult
 from mcp.types import EmbeddedResource, ImageContent, TextContent
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import core_schema as cs
 
 
 class MCPToolkit(BaseToolkit):
@@ -43,60 +41,11 @@ class MCPToolkit(BaseToolkit):
                 session=self.session,
                 name=tool.name,
                 description=tool.description or "",
-                args_schema=create_schema_model(tool.inputSchema),
+                args_schema=tool.inputSchema,
             )
             # list_tools returns a PaginatedResult, but I don't see a way to pass the cursor to retrieve more tools
             for tool in self._tools.tools
         ]
-
-
-TYPEMAP = {
-    "integer": int,
-    "number": float,
-    "array": list,
-    "boolean": bool,
-    "string": str,
-    "object": object,
-    "null": type(None),
-}
-
-FIELD_DEFAULTS = {
-    int: 0,
-    float: 0.0,
-    list: [],
-    bool: False,
-    str: "",
-    type(None): None,
-}
-
-
-def configure_field(name: str, type_: dict[str, t.Any], required: list[str]) -> tuple[type, t.Any]:
-    field_type = TYPEMAP[type_["type"]]
-    default_ = FIELD_DEFAULTS.get(field_type) if name not in required else ...
-    return field_type, default_
-
-
-def create_schema_model(schema: dict[str, t.Any]) -> type[pydantic.BaseModel]:
-    # Create a new model class that returns our JSON schema.
-    # LangChain requires a BaseModel class.
-    class SchemaBase(pydantic.BaseModel):
-        model_config = pydantic.ConfigDict(extra="allow")
-
-        @t.override
-        @classmethod
-        def __get_pydantic_json_schema__(
-            cls, core_schema: cs.CoreSchema, handler: pydantic.GetJsonSchemaHandler
-        ) -> JsonSchemaValue:
-            return schema
-
-    # Since this langchain patch, we need to synthesize pydantic fields from the schema
-    # https://github.com/langchain-ai/langchain/commit/033ac417609297369eb0525794d8b48a425b8b33
-    required = schema.get("required", [])
-    fields: dict[str, t.Any] = {
-        name: configure_field(name, type_, required) for name, type_ in schema["properties"].items()
-    }
-
-    return pydantic.create_model("Schema", __base__=SchemaBase, **fields)
 
 
 class MCPTool(BaseTool):
@@ -124,9 +73,3 @@ class MCPTool(BaseTool):
         text_content = [block for block in result.content if isinstance(block, TextContent)]
         artifacts = [block for block in result.content if not isinstance(block, TextContent)]
         return pydantic_core.to_json(text_content).decode(), artifacts
-
-    @property
-    @t.override
-    def tool_call_schema(self) -> type[pydantic.BaseModel]:
-        assert self.args_schema is not None  # noqa: S101
-        return self.args_schema
