@@ -3,19 +3,15 @@ name = "langchain-mcp"
 version = "0.2.0"
 description = "Model Context Protocol tool calling support for LangChain"
 readme = "README.md"
-authors = [
-    { name = "Andrew Wason", email = "rectalogic@rectalogic.com" }
-]
+authors = [{ name = "Andrew Wason", email = "rectalogic@rectalogic.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "langchain-core~=0.3",
+    "langchain-core~=0.3.37",
     "mcp~=1.0",
     "pydantic~=2.10",
     "typing-extensions~=4.12",
 ]
-classifiers = [
-    "License :: OSI Approved :: MIT License",
-]
+classifiers = ["License :: OSI Approved :: MIT License"]
 
 [build-system]
 requires = ["hatchling"]
