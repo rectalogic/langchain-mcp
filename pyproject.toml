@@ -1,6 +1,6 @@
 [project]
 name = "langchain-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "Model Context Protocol tool calling support for LangChain"
 readme = "README.md"
 authors = [{ name = "Andrew Wason", email = "rectalogic@rectalogic.com" }]
