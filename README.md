@@ -1,5 +1,7 @@
 # langchain-mcp
 
+*Note: langchain now has a more official implementation [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)*
+
 ![PyPI - Version](https://img.shields.io/pypi/v/langchain-mcp)
 
 [Model Context Protocol](https://modelcontextprotocol.io) tool calling support in LangChain.
